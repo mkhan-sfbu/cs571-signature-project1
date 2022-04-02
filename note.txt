@@ -1,0 +1,70 @@
+export PROJECT_ID=signature-project1-19609-v1
+# export PRJ_IMG_ROOT=us-west1-docker.pkg.dev # fremont
+export PRJ_IMG_ROOT=us-west2-docker.pkg.dev
+
+
+................... session restart .................
+. sgnprj1/start-session.sh
+export PROJECT_ID=signature-project1-19609-v1
+-- need to check ip of mogodb service and insert into corresponding configuration YAML file
+"kubectl get service" to get ip
+-- configuration files
+1. sutdent-server/studentserver-configmap.yaml
+2. bookshelf/bookshelf-configmap.yaml
+-- need to change image name due to zone change or project name change
+1. student-server/studentserver-deployment.yaml
+2. bookshelf/bookshelf-deployment.yaml
+..................................................
+
+# gcloud config set compute/zone us-west1-a # fremont!
+gcloud config set compute/zone us-west2-a
+gcloud container clusters create cs571-sgnprj1-cluster
+gcloud container clusters get-credentials cs571-sgnprj1-cluster --zone us-west2-a
+
+gcloud compute disks create --size=10GiB --zone=us-west2-a mongodisk
+
+minikube start
+minikube addons enable ingress
+
+kubectl apply -f sgnprj1/mongodb-service.yaml
+
+kubectl apply -f sgnprj1/mongodb.yaml
+
+-- kubectl exec -it mongopod -- mongo
+
+
+kubectl exec -it mongodb-deployment-68c6f84d89-hcsf4 -- bash
+# mongo 34.94.54.39
+
+cd sgnprj1
+vi student-data-manual-input.js
+npm install mongodb
+node student-data-manual-input.js
+
+# gcloud artifacts repositories create cs571-sgnprj1-repo --repository-format=docker --location=us-west1 --description="Cloud Computing Signature Project Repository for SFBU, MSCS, Spring 2022, SHKR"
+
+gcloud artifacts repositories create cs571-sgnprj1-repo --repository-format=docker --location=us-west2 --description="Cloud Computing Signature Project Repository for SFBU, MSCS, Spring 2022, SHKR"
+gcloud auth configure-docker ${PRJ_IMG_ROOT}
+
+-- build student server and push to repository
+docker build -t ${PRJ_IMG_ROOT}/${PROJECT_ID}/cs571-sgnprj1-repo/shkr19609-sgnprj1-student-server ./sgnprj1/student-server/
+docker push ${PRJ_IMG_ROOT}/${PROJECT_ID}/cs571-sgnprj1-repo/shkr19609-sgnprj1-student-server
+
+-- build bookshelf and push to repository
+docker build -t ${PRJ_IMG_ROOT}/${PROJECT_ID}/cs571-sgnprj1-repo/shkr19609-sgnprj1-bookshelf ./sgnprj1/bookshelf/
+docker push ${PRJ_IMG_ROOT}/${PROJECT_ID}/cs571-sgnprj1-repo/shkr19609-sgnprj1-bookshelf
+
+kubectl apply -f sgnprj1/student-server/studentserver-configmap.yaml
+kubectl apply -f sgnprj1/student-server/studentserver-deployment.yaml
+kubectl apply -f sgnprj1/student-server/studentserver-service.yaml
+
+kubectl apply -f sgnprj1/bookshelf/bookshelf-configmap.yaml
+kubectl apply -f sgnprj1/bookshelf/bookshelf-deployment.yaml
+kubectl apply -f sgnprj1/bookshelf/bookshelf-service.yaml
+
+kubectl apply -f sgnprj1/sgnprj1-ingress.yaml
+
+
+
+
+
