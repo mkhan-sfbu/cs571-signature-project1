@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: studentserver-service
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  type: LoadBalancer
+  ports:
+      # service port in cluster
+    - port: 8080
+      # port to contact inside container
+      targetPort: 8080
+  selector:
+    app: studentserver-deployment

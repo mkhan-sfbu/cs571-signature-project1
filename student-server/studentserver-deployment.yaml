@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studentserver-deployment
+  labels:
+    app: studentserver-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: studentserver-deployment
+  template:
+    metadata:
+      labels:
+        app: studentserver-deployment
+    spec:
+      containers:
+        - image: us-west2-docker.pkg.dev/signature-project1-19609-v1/cs571-sgnprj1-repo/shkr19609-sgnprj1-student-server
+          imagePullPolicy: Always
+          name: studentserver-deployment
+          command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: studentserver-config
+                  key: MONGO_URL
+            - name: MONGO_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: studentserver-config
+                  key: MONGO_DATABASE
